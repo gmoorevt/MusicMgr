@@ -23,7 +23,7 @@ class FileMgr(cmd.Cmd):
     def do_findmusic(self,line):
 
         ff = FilesFinder()
-        print ff.findfiles('/Users/gmoore/')
+        ff.findfiles(line)
 
        # FilesFinder.findfiles('/User/gmoore/')
 

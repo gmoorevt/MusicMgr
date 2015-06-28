@@ -33,5 +33,6 @@ class FilesFinder(object):
                     self.musiclist.append(os.path.join(dirName,fname))
 
         print "%i Music files found" % self.filecount
+        print self.filecount
         return self.musiclist
 
