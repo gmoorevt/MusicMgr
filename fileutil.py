@@ -6,12 +6,14 @@ import sys
 import shutil
 
 
-class DupinatorError(Exception):pass
-class DoseNotExistError(DupinatorError):pass
+class DupinatorError(Exception): pass
+
+
+class DoseNotExistError(DupinatorError): pass
+
 
 class FileBySizer(object):
-
-    def __init__(self,basePath = os.getcwd(),skipList=['Thumbs','.DS_Store'],minBytes = 100):
+    def __init__(self, basePath=os.getcwd(), skipList=['Thumbs', '.DS_Store'], minBytes=100):
         if not os.path.isdir(basePath):
             raise DoseNotExistError, "basePath %s does NOT exist" % basePath
         else:
@@ -32,12 +34,12 @@ class FileBySizer(object):
         s += ' ]'
         return s
 
-    def walker(self,arg,dirname,fnames):
+    def walker(self, arg, dirname, fnames):
         d = os.getcwd()
         os.chdir(dirname)
         try:
-            #todo for robust handling of skiplist imput arg
-            fnames = [name for name in fnames if name!=".DS_Store" and name!="Thumbs"]
+            # todo for robust handling of skiplist imput arg
+            fnames = [name for name in fnames if name != ".DS_Store" and name != "Thumbs"]
         except ValueError:
             pass
         for f in fnames:
@@ -51,7 +53,7 @@ class FileBySizer(object):
             else:
                 a = []
                 self.filesBySize[size] = a
-            a.append(os.path.join(dirname,f))
+            a.append(os.path.join(dirname, f))
         os.chdir(d)
 
     def getFilesBySize(self):
@@ -59,15 +61,14 @@ class FileBySizer(object):
         for x in sys.argv[1:]:
             d = os.path.normpath(x)
             print "Scanning directory '%s'...." % d
-            os.path.walk(d,self.walker,self.filesBySize)
-        return  self.filesBySize
-
+            os.path.walk(d, self.walker, self.filesBySize)
+        return self.filesBySize
 
 
 class PotentialDupeFinder(object):
     """ A class for finding potential Dupes based on looking at the the first 128 bytes of a file"""
 
-    def __init__(self,fbs, requireEqualNames=False,firstScanBytes=8192):
+    def __init__(self, fbs, requireEqualNames=False, firstScanBytes=8192):
         self.filesBySize = fbs.filesBySize
         self.requireEqualNames = requireEqualNames
         self.firstScanBytes = firstScanBytes
@@ -84,6 +85,7 @@ class PotentialDupeFinder(object):
             s = s[0:-1]
         s += ' ]'
         return s
+
     def findPotentialDupes(self):
         print 'Finding potential dupes...'
         dupes = []
@@ -95,13 +97,13 @@ class PotentialDupeFinder(object):
             inFiles = self.filesBySize[k]
             hashes = {}
             if len(inFiles) is 1: continue
-            print 'Testing %d files of size %d...' %(len(inFiles),k)
+            print 'Testing %d files of size %d...' % (len(inFiles), k)
             if self.requireEqualNames:
                 for fileName in inFiles:
-                    hashes.setdefault(os.path.basename(fileName),[]).append(fileName)
+                    hashes.setdefault(os.path.basename(fileName), []).append(fileName)
                 inFiles = []
                 for nameGroup in hashes.values():
-                    if len(nameGroup)>1:
+                    if len(nameGroup) > 1:
                         inFiles.extend(nameGroup)
                 hashes = {}
             for fileName in inFiles:
@@ -116,7 +118,7 @@ class PotentialDupeFinder(object):
                 else:
                     hashes[hashValue] = [fileName]
                 aFile.close()
-            outFileGroups = [fileGroup for fileGroup in hashes.values()if len(fileGroup)>1]
+            outFileGroups = [fileGroup for fileGroup in hashes.values() if len(fileGroup) > 1]
             if k <= self.firstScanBytes:
                 dupes.extend(outFileGroups)
             else:
@@ -128,7 +130,7 @@ class PotentialDupeFinder(object):
 
 
 class RealDupeFinder(object):
-    def __init__(self,potDupeFinder):
+    def __init__(self, potDupeFinder):
         self.dupes = potDupeFinder.dupes
         self.potentialDupes = potDupeFinder.potentialDupes
         self.getRealDupes()
@@ -150,8 +152,8 @@ class RealDupeFinder(object):
         for aSet in self.potentialDupes:
             hashes = {}
             for fileName in aSet:
-                print 'Scanning file "%s"...'  %fileName
-                aFile = file(fileName,'r')
+                print 'Scanning file "%s"...' % fileName
+                aFile = file(fileName, 'r')
                 hasher = md5()
                 while True:
                     r = aFile.read()
@@ -168,11 +170,12 @@ class RealDupeFinder(object):
                     hashes[hashValue].append(fileName)
                 else:
                     hashes[hashValue] = [fileName]
-            outFileGroups = [fileGroup for fileGroup in hashes.values() if len(fileGroup)>1]
+            outFileGroups = [fileGroup for fileGroup in hashes.values() if len(fileGroup) > 1]
             self.dupes.extend(outFileGroups)
 
+
 class DupeHandler(object):
-    def __init__(self,dupes,result='list'):
+    def __init__(self, dupes, result='list'):
         """
         This function accepts a list of files and moved
         :param dupes: A list of files that will be removed
@@ -193,46 +196,51 @@ class DupeHandler(object):
             s = s[0:-1]
         s += ' ]'
         return s
+
     def handleDupes(self):
-        #ToDo Give option to delete, move or list files
+        # ToDo Give option to delete, move or list files
         i = 0
         bytesSaved = 0
         for d in self.dupes:
             print '## "%s"' % d
             for f in d[1:]:
-                i = i +1
+                i = i + 1
                 bytesSaved += os.path.getsize(f)
                 print "deleting %s" % f
-                if self.result =='move':
-                    dupedir = os.path.join(os.curdir,'dupes')
+                if self.result == 'move':
+                    dupedir = os.path.join(os.curdir, 'dupes')
                     if not os.path.exists(dupedir):
-                        os.makedirs(os.path.join(os.curdir,'dupes'))
+                        os.makedirs(os.path.join(os.curdir, 'dupes'))
                     fn = os.path.basename(f)
-                    if os.path.exists(os.path.join(dupedir,fn)):
+                    if os.path.exists(os.path.join(dupedir, fn)):
                         fi = 1
-                        while os.path.exists(os.path.join(dupedir,fn)):
-                            fi = fi +1
-                            fn = "%s [%d]" % (fn,fi)
+                        while os.path.exists(os.path.join(dupedir, fn)):
+                            fi = fi + 1
+                            fn = "%s [%d]" % (fn, fi)
                             print fn
 
-                    shutil.move(f,os.path.join(dupedir,fn) )
+                    shutil.move(f, os.path.join(dupedir, fn))
 
                 if self.result == 'delete':
-                    pass
+                    os.remove(f)
 
-                #os.remove(f)
+                if self.result == 'list':
+                    pass
+                    print self.dupes
+
             print
-        print "We would have saved %.1fm: %d file(s) duplicated." % (bytesSaved/1024.0/1024.0,len(self.dupes))
+        print "We would have saved %.1fm: %d file(s) duplicated." % (bytesSaved / 1024.0 / 1024.0, len(self.dupes))
+
 
 class Dupinator(object):
     """Dupinator class to serve as base for file duplication utilities"""
 
-    def __init__(self, basePath=os.getcwd(), skipList=['Thumbs','.DS_Store'],minbytes=100,reslut='list'):
-        fileBySizeObj = FileBySizer(basePath = basePath,skipList=skipList,minBytes=minbytes)
+    def __init__(self, basePath=os.getcwd(), skipList=['Thumbs', '.DS_Store'], minbytes=100, reslut='list'):
+        fileBySizeObj = FileBySizer(basePath=basePath, skipList=skipList, minBytes=minbytes)
         potentialDupeObj = PotentialDupeFinder(fileBySizeObj)
         realDupeObj = RealDupeFinder(potentialDupeObj)
         self.dupes = realDupeObj.dupes
-        DupeHandler(self.dupes,reslut)
+        DupeHandler(self.dupes, reslut)
 
     def __str__(self):
         c = self.__class__.__name__
@@ -246,10 +254,8 @@ class Dupinator(object):
         s += ' ]'
         return s
 
+
 if __name__ == '__main__':
     basePath = sys.argv[1]
     Dupinator(basePath=basePath)
     sys.exit(0)
-
-    
-
